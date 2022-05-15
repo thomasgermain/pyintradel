@@ -18,7 +18,7 @@ following data (for the current year)
 
 ## Usage
 
-The `town` parameter is the name of the town, you can check it here: [towns](./pyintradel/towns.py)
+The `town` parameter is the name of the town, you can check it here: [towns](pyintradel/api/towns.py)
 
 ### Python module
 

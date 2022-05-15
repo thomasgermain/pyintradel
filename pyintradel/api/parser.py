@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Dict
 
 from bs4 import BeautifulSoup
@@ -48,12 +50,12 @@ def _start_date(data: BeautifulSoup) -> str:
     return str(start_date.text.split(":")[1].strip())
 
 
-def _chip_id(data: BeautifulSoup) -> str:
+def _chip_id(data: BeautifulSoup) -> str | None:
     chip_id = None
     possible_chip_id = data.findChildren(name="p")
     if len(possible_chip_id) > 1:
         chip_id = data.findChildren(name="p")[1].text.split(":")[1].strip()
-    return str(chip_id)
+    return chip_id
 
 
 def _details(data: BeautifulSoup) -> list[Any]:
@@ -64,9 +66,9 @@ def _details(data: BeautifulSoup) -> list[Any]:
     return attrs
 
 
-def _total(data: BeautifulSoup) -> str:
+def _total(data: BeautifulSoup) -> str | None:
     total = None
     possible_total = data.find(name="tfoot").findChildren("td")
     if possible_total:
         total = possible_total[2].text.split(" ")[0].strip()
-    return str(total)
+    return total
