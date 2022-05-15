@@ -20,7 +20,7 @@ async def get_data(
 
     town_id = TOWNS_MAP.get(town.upper())
     if not town_id:
-        ValueError('Town not found', town)
+        ValueError("Town not found", town)
 
     data = {"llogin": "YES", "login": login, "pass": password, "commune": town_id}
 
