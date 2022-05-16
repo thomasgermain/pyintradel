@@ -54,7 +54,7 @@ def _chip_id(data: BeautifulSoup) -> str | None:
     chip_id = None
     possible_chip_id = data.findChildren(name="p")
     if len(possible_chip_id) > 1:
-        chip_id = data.findChildren(name="p")[1].text.split(":")[1].strip()
+        chip_id = str(data.findChildren(name="p")[1].text.split(":")[1].strip())
     return chip_id
 
 
@@ -70,5 +70,5 @@ def _total(data: BeautifulSoup) -> str | None:
     total = None
     possible_total = data.find(name="tfoot").findChildren("td")
     if possible_total:
-        total = possible_total[2].text.split(" ")[0].strip()
+        total = str(possible_total[2].text.split(" ")[0].strip())
     return total
