@@ -1,6 +1,6 @@
 import unittest
 
-from pyintradel.parser import parse
+from pyintradel.api.parser import parse
 from tests.mock import CORRECT_RESPONSE, INCORRECT_LOGIN
 
 
