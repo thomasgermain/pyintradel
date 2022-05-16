@@ -16,7 +16,7 @@ _HEADERS = {"Content-Type": "application/x-www-form-urlencoded"}
 
 
 async def get_data(
-        session: aiohttp.ClientSession, login: str, password: str, town: str
+    session: aiohttp.ClientSession, login: str, password: str, town: str
 ) -> list[Any]:
     _LOGGER.info("Will query data for user %s and city %s", login, town)
 
