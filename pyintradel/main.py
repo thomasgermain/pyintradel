@@ -1,4 +1,5 @@
 import asyncio
+import json
 import sys
 
 import aiohttp
@@ -8,7 +9,7 @@ import api
 
 async def _main(login: str, password: str, town: str) -> None:
     async with aiohttp.ClientSession() as sess:
-        print(await api.get_data(sess, login, password, town))
+        json.dump(await api.get_data(sess, login, password, town), sys.stdout, indent=2)
 
 
 if __name__ == "__main__":
