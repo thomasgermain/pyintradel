@@ -62,7 +62,10 @@ def _details(data: BeautifulSoup) -> list[Any]:
     attrs = []
     for row in data.find(name="tbody").findChildren(name="tr"):
         tds = row.findAll(name="td")
-        attrs.append({"date": tds[0].text, "detail": tds[2].text})
+        # When the list is empty, the website still includes an empty row.
+        # Let's just skip empty rows, as a valid row needs a date anyway.
+        if tds[0].text:
+            attrs.append({"date": tds[0].text, "detail": tds[2].text})
     return attrs
 
 
