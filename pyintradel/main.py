@@ -19,4 +19,6 @@ if __name__ == "__main__":
     passw_param = sys.argv[2]
     town_param = sys.argv[3]
 
-    asyncio.get_event_loop().run_until_complete(_main(user_param, passw_param, town_param))
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(_main(user_param, passw_param, town_param))
