@@ -26,7 +26,7 @@ async def get_data(
 
     data = {"llogin": "YES", "login": login, "pass": password, "commune": town_id}
 
-    async with session.post(_URL, data=data, headers=_HEADERS) as resp:
+    async with session.post(_URL, data=data, headers=_HEADERS, ssl=False) as resp:
         if resp.status != 200:
             raise ValueError(f"Received error {resp.status}", await resp.text())
         else:
