@@ -1,6 +1,6 @@
 from typing import Any
 
-from bs4 import BeautifulSoup, NavigableString, Tag
+from bs4 import BeautifulSoup, Tag
 
 
 def parse(response: str) -> list[Any]:
@@ -30,7 +30,7 @@ def parse(response: str) -> list[Any]:
     return results
 
 
-def _require_tag(node: Tag | NavigableString | None) -> Tag:
+def _require_tag(node: object) -> Tag:
     """Narrow a bs4 lookup result to a Tag, failing loudly on unexpected markup."""
     if not isinstance(node, Tag):
         raise ValueError("Unexpected response structure from intradel")
