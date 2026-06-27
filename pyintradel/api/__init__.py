@@ -5,10 +5,7 @@ from typing import Any
 
 import aiohttp
 
-from . import parser
-from . import towns
-
-logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(name)s: %(message)s")
+from . import parser, towns
 
 _LOGGER = logging.getLogger(__name__)
 _URL = "https://www.intradel.be/particulier/"
@@ -22,7 +19,7 @@ async def get_data(
 
     town_id = towns.TOWNS_MAP.get(town.upper())
     if not town_id:
-        ValueError("Town not found", town)
+        raise ValueError("Town not found", town)
 
     data = {"llogin": "YES", "login": login, "pass": password, "commune": town_id}
 
