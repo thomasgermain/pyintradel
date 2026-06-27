@@ -94,7 +94,7 @@ async with aiohttp.ClientSession() as sess:
 
 ### Command line
 ```bash
-python3 main.py user passw town
+pyintradel user passw town
 ```
 
 ---

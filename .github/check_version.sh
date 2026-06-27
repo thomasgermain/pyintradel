@@ -1,7 +1,7 @@
 #!/bin/bash
 
-version=$(python3 setup.py -V)
-result=$(curl -s https://pypi.org/pypi/pyIntradel/json | jq -r '.releases | keys[]' | grep -w $version)
+version=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+result=$(curl -s https://pypi.org/pypi/pyIntradel/json | jq -r '.releases | keys[]' | grep -w "$version")
 
 if [ -z "$result" ]
 then
