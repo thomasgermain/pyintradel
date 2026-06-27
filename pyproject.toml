@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyIntradel"
-version = "0.0.5"
+version = "0.0.6"
 description = "Python interface for Intradel"
 readme = "README.md"
 license = { text = "MIT" }
@@ -13,7 +13,7 @@ authors = [
     { name = "Thomas Germain", email = "12560542+thomasgermain@users.noreply.github.com" },
 ]
 dependencies = [
-    "aiohttp>=3.14,<4.0",
+    "aiohttp>=3.11,<4.0",
     "beautifulsoup4>=4.15,<5.0",
 ]
 classifiers = [
