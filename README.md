@@ -82,6 +82,12 @@ Here is an example of json:
 
 The `town` parameter is the name of the town, you can check it here: [towns](pyintradel/api/towns.py)
 
+The intradel.be login form is now protected by an invisible reCAPTCHA, which can
+reject a plain login/password POST (this notably happens when the browser blocks
+third-party cookies, e.g. in private browsing, but can also affect this library).
+As a workaround, you can authenticate once in a real browser, then reuse the
+resulting session cookie instead of login/password.
+
 ### Python module
 
 ```python
@@ -89,12 +95,18 @@ import aiohttp
 from pyintradel import api
 
 async with aiohttp.ClientSession() as sess:
+    # Using login/password
     await api.get_data(sess, login, password, town)
+
+    # Using a session cookie captured from an already logged-in browser
+    await api.get_data(sess, cookie=cookie)
 ```
 
 ### Command line
 ```bash
 python3 -m pyintradel.main user passw town
+# or
+python3 -m pyintradel.main --cookie "PHPSESSID=..."
 ```
 
 ---
