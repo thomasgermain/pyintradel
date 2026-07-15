@@ -29,11 +29,11 @@ async def get_data(
     """
     if cookie:
         _LOGGER.info("Will query data using a session cookie")
-        headers = {
-            "Cookie": cookie
-        }
+        headers = {"Cookie": cookie}
 
-        async with session.get("https://www.intradel.be/particulier/data.php", headers=headers) as resp:
+        async with session.get(
+            "https://www.intradel.be/particulier/data.php", headers=headers
+        ) as resp:
             if resp.status != 200:
                 raise ValueError(f"Received error {resp.status}", await resp.text())
             return parser.parse(await resp.text())
