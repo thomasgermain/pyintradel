@@ -13,9 +13,7 @@ def parse(response: str) -> list[Any]:
     soup = BeautifulSoup(response, features="html.parser")
 
     if soup.select_one('[name="pLogin"]') is not None:
-        raise AuthenticationError(
-            "Session cookie rejected by intradel, it is probably expired or invalid"
-        )
+        raise AuthenticationError()
 
     for data in soup.select(".grid .row .post__content"):
         result: dict[str, Any] = {}
