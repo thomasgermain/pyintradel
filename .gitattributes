@@ -1,0 +1,2 @@
+# Scraped pages kept byte-for-byte (mixed line endings) for parser tests.
+tests/fixtures/*.html -text

@@ -45,8 +45,6 @@ packages = ["pyintradel"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-# Large scraped HTML fixture, kept verbatim for parser tests.
-extend-exclude = ["tests/mock.py"]
 
 [tool.ruff.lint]
 select = [
