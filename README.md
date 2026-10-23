@@ -109,5 +109,32 @@ python3 -m pyintradel.main user passw town
 python3 -m pyintradel.main --cookie "PHPSESSID=..."
 ```
 
+## Development
+
+The project uses [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv sync                  # create .venv with the dev tools from uv.lock
+uv run pytest
+uv run ruff check
+uv run ruff format
+uv run mypy
+uv build                 # sdist and wheel in dist/
+```
+
+Install the git pre-commit hook once per clone; it runs ruff (lint with autofix, format) and
+checks that `uv.lock` matches `pyproject.toml` before each commit:
+
+```bash
+uv tool install pre-commit
+pre-commit install
+pre-commit run --all-files   # optional: run the hooks on the whole repository
+```
+
+CI runs the same checks plus mypy and the tests, so skipping the hook only delays the feedback.
+
+To release, publish a GitHub release whose tag is the new version (e.g. `0.1.0`): the
+version is derived from the tag, and CI publishes to PyPI once the checks pass.
+
 ---
 <a href="https://www.buymeacoffee.com/tgermain" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
