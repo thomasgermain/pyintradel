@@ -1,6 +1,12 @@
 import pickle
 import unittest
 from typing import Any
+from unittest import mock
+
+import aiohttp
+from aiohttp import web
+from aiohttp.test_utils import TestServer
+from yarl import URL
 
 from pyintradel import api
 from tests.mock import CORRECT_RESPONSE, INCORRECT_LOGIN
@@ -21,9 +27,18 @@ class _FakeResponse:
         return False
 
 
+class _FakeCookieJar:
+    def __init__(self) -> None:
+        self.cleared_domains: list[str] = []
+
+    def clear_domain(self, domain: str) -> None:
+        self.cleared_domains.append(domain)
+
+
 class _FakeSession:
     def __init__(self, response: _FakeResponse) -> None:
         self._response = response
+        self.cookie_jar = _FakeCookieJar()
         self.get_calls: list[tuple[str, dict[str, str]]] = []
         self.allow_redirects: list[bool] = []
 
@@ -34,14 +49,34 @@ class _FakeSession:
 
 
 class GetDataTest(unittest.IsolatedAsyncioTestCase):
-    async def test_cookie_is_sent_as_header(self) -> None:
+    async def test_cookie_is_sent_after_clearing_intradel_cookies(self) -> None:
         session = _FakeSession(_FakeResponse(200, CORRECT_RESPONSE))
         result = await api.get_data(session, "PHPSESSID=abc")  # type: ignore[arg-type]
 
         self.assertEqual(len(result), 3)
-        self.assertEqual(len(session.get_calls), 1)
+        self.assertEqual(session.get_calls, [(api._DATA_URL, {"Cookie": "PHPSESSID=abc"})])
+        self.assertEqual(session.cookie_jar.cleared_domains, ["intradel.be"])
+
+    async def test_full_browser_header_is_sent_unchanged(self) -> None:
+        # Values a strict cookie parser rejects or rewrites: JSON, spaces, bare flag, attribute
+        # names used as cookie names, commas.
+        raw = (
+            'consent={"a":1}; PHPSESSID=abc; OptanonConsent=datestamp=Thu Oct 24 2026 (CEST); '
+            "flag; path=/; other=a,b"
+        )
+        session = _FakeSession(_FakeResponse(200, CORRECT_RESPONSE))
+        await api.get_data(session, raw)  # type: ignore[arg-type]
+
         _, headers = session.get_calls[0]
-        self.assertEqual(headers["Cookie"], "PHPSESSID=abc")
+        self.assertEqual(headers, {"Cookie": raw})
+
+    async def test_empty_cookie_raises_before_any_request(self) -> None:
+        for raw in ("", "   \n", "Cookie:", "  cookie :  \r\n"):
+            session = _FakeSession(_FakeResponse(200, CORRECT_RESPONSE))
+            with self.assertRaisesRegex(api.AuthenticationError, "No cookie found", msg=raw):
+                await api.get_data(session, raw)  # type: ignore[arg-type]
+
+            self.assertEqual(session.get_calls, [], raw)
 
     async def test_redirect_to_login_raises_authentication_error(self) -> None:
         session = _FakeSession(_FakeResponse(302, ""))
@@ -81,4 +116,53 @@ class GetDataTest(unittest.IsolatedAsyncioTestCase):
             await api.get_data(session, raw)  # type: ignore[arg-type]
 
             _, headers = session.get_calls[0]
-            self.assertEqual(headers["Cookie"], "PHPSESSID=abc", raw)
+            self.assertEqual(headers, {"Cookie": "PHPSESSID=abc"}, raw)
+
+
+class SharedSessionTest(unittest.IsolatedAsyncioTestCase):
+    """Real aiohttp client against a local server mimicking intradel's cookie behaviour."""
+
+    async def asyncSetUp(self) -> None:
+        self.received_cookie_headers: list[str] = []
+
+        async def data(request: web.Request) -> web.Response:
+            header = request.headers.get("Cookie", "")
+            self.received_cookie_headers.append(header)
+            # Raw split, like PHP: a strict parser would choke on some real browser cookies.
+            if "PHPSESSID=valid" in [part.strip() for part in header.split(";")]:
+                return web.Response(text=CORRECT_RESPONSE, content_type="text/html")
+            # Like intradel: no valid session, so start an anonymous one and redirect to login.
+            response = web.Response(status=302, headers={"Location": "index.php"})
+            response.set_cookie("PHPSESSID", "anonymous")
+            return response
+
+        app = web.Application()
+        app.router.add_get("/data.php", data)
+        self.server = TestServer(app)
+        await self.server.start_server()
+        self.addAsyncCleanup(self.server.close)
+
+    async def test_cookie_from_earlier_anonymous_request_does_not_override_ours(self) -> None:
+        url = str(self.server.make_url("/data.php"))
+        raw = 'consent={"a":1}; PHPSESSID=valid; flag'
+        # unsafe=True: the default jar ignores cookies from IP addresses such as 127.0.0.1.
+        async with aiohttp.ClientSession(cookie_jar=aiohttp.CookieJar(unsafe=True)) as session:
+            session.cookie_jar.update_cookies({"other": "1"}, URL("https://example.com/"))
+            # Any request without our cookie stores the server's anonymous session in the jar.
+            async with session.get(url, allow_redirects=False) as resp:
+                self.assertEqual(resp.status, 302)
+            self.assertIn("PHPSESSID", [c.key for c in session.cookie_jar])
+
+            with (
+                mock.patch.object(api, "_DATA_URL", url),
+                mock.patch.object(api, "_COOKIE_DOMAIN", self.server.host),
+            ):
+                result = await api.get_data(session, raw)
+
+            remaining = [c.key for c in session.cookie_jar]
+
+        self.assertEqual(len(result), 3)
+        # Sent byte for byte, with nothing from the jar mixed in.
+        self.assertEqual(self.received_cookie_headers[-1], raw)
+        # Cookies of other sites are left alone.
+        self.assertEqual(remaining, ["other"])
