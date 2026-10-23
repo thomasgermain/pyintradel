@@ -80,13 +80,15 @@ Here is an example of json:
 
 ## Usage
 
-The `town` parameter is the name of the town, you can check it here: [towns](pyintradel/api/towns.py)
+The intradel.be login form is protected by an invisible reCAPTCHA, so this library
+cannot log in by itself. Authenticate once in a real browser, then pass the resulting
+session cookie (the raw `Cookie` header, e.g. `PHPSESSID=...`).
 
-The intradel.be login form is now protected by an invisible reCAPTCHA, which can
-reject a plain login/password POST (this notably happens when the browser blocks
-third-party cookies, e.g. in private browsing, but can also affect this library).
-As a workaround, you can authenticate once in a real browser, then reuse the
-resulting session cookie instead of login/password.
+Errors raised by `api.get_data`, all subclasses of `api.IntradelError` (itself a `ValueError`):
+- `api.AuthenticationError`: the cookie has expired or is invalid; log in again in the
+  browser and use the new cookie.
+- `api.ApiError`: unexpected HTTP status, available as `.status`.
+- `api.ParseError`: the page structure is not the expected one, likely after a website change.
 
 ### Python module
 
@@ -95,17 +97,11 @@ import aiohttp
 from pyintradel import api
 
 async with aiohttp.ClientSession() as sess:
-    # Using login/password
-    await api.get_data(sess, login, password, town)
-
-    # Using a session cookie captured from an already logged-in browser
-    await api.get_data(sess, cookie=cookie)
+    await api.get_data(sess, cookie)
 ```
 
 ### Command line
 ```bash
-python3 -m pyintradel.main user passw town
-# or
 python3 -m pyintradel.main --cookie "PHPSESSID=..."
 ```
 
