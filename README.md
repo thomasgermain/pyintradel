@@ -122,6 +122,17 @@ uv run mypy
 uv build                 # sdist and wheel in dist/
 ```
 
+Install the git pre-commit hook once per clone; it runs ruff (lint with autofix, format) and
+checks that `uv.lock` matches `pyproject.toml` before each commit:
+
+```bash
+uv tool install pre-commit
+pre-commit install
+pre-commit run --all-files   # optional: run the hooks on the whole repository
+```
+
+CI runs the same checks plus mypy and the tests, so skipping the hook only delays the feedback.
+
 To release, publish a GitHub release whose tag is the new version (e.g. `0.1.0`): the
 version is derived from the tag, and CI publishes to PyPI once the checks pass.
 
