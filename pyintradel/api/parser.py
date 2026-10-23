@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup, Tag
 
 from .exceptions import AuthenticationError, ParseError
 
+_UNEXPECTED_STRUCTURE = "Unexpected response structure from intradel"
+
 
 def parse(response: str) -> list[Any]:
     """Parse response from intradel"""
@@ -26,7 +28,7 @@ def parse(response: str) -> list[Any]:
                 details = _details(data)
                 total = _total(data) or str(len(details))
             except IndexError as err:
-                raise ParseError("Unexpected response structure from intradel") from err
+                raise ParseError(_UNEXPECTED_STRUCTURE) from err
 
             result.update({"name": name})
             result.update({"start_date": start_date})
@@ -41,7 +43,7 @@ def parse(response: str) -> list[Any]:
 def _require_tag(node: object) -> Tag:
     """Narrow a bs4 lookup result to a Tag, failing loudly on unexpected markup."""
     if not isinstance(node, Tag):
-        raise ParseError("Unexpected response structure from intradel")
+        raise ParseError(_UNEXPECTED_STRUCTURE)
     return node
 
 
