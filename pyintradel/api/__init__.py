@@ -11,8 +11,6 @@ from .exceptions import ApiError, AuthenticationError, IntradelError, ParseError
 
 _LOGGER = logging.getLogger(__name__)
 _DATA_URL = "https://www.intradel.be/particulier/data.php"
-# Enough of an error page to diagnose it, without flooding the logs.
-_MAX_LOGGED_BODY = 500
 # Case-insensitive: HTTP/2 dev tools show the header name lowercased.
 _COOKIE_HEADER_PREFIX = re.compile(r"^\s*cookie\s*:", re.IGNORECASE)
 
@@ -34,7 +32,7 @@ async def get_data(session: aiohttp.ClientSession, cookie: str) -> list[Any]:
             if _LOGGER.isEnabledFor(logging.DEBUG):
                 # Lenient decoding: an error page in an odd charset must not mask the ApiError.
                 body = await resp.text(errors="replace")
-                _LOGGER.debug("HTTP %s body: %s", resp.status, body[:_MAX_LOGGED_BODY])
+                _LOGGER.debug("HTTP %s body: %s", resp.status, body)
             raise ApiError(resp.status)
         return parser.parse(await resp.text())
 
