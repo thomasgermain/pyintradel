@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyIntradel"
-version = "0.0.7"
+version = "0.0.8"
 description = "Python interface for Intradel"
 readme = "README.md"
 license = { text = "MIT" }
