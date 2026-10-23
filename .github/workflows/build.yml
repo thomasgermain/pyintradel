@@ -31,7 +31,6 @@ jobs:
     - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
       with:
         python-version: ${{ matrix.python-version }}
-        enable-cache: true
 
     - name: Install dependencies
       id: sync
@@ -40,22 +39,22 @@ jobs:
     # Each check runs even if a previous one failed, but not when the install itself failed.
     - name: Lint with ruff
       if: ${{ !cancelled() && steps.sync.outcome == 'success' }}
-      run: uv run ruff check pyintradel tests
+      run: uv run ruff check
 
     - name: Check formatting with ruff
       if: ${{ !cancelled() && steps.sync.outcome == 'success' }}
-      run: uv run ruff format --check pyintradel tests
+      run: uv run ruff format --check
 
     - name: Type check with mypy
       if: ${{ !cancelled() && steps.sync.outcome == 'success' }}
-      run: uv run mypy pyintradel tests
+      run: uv run mypy
 
     - name: Run tests
       if: ${{ !cancelled() && steps.sync.outcome == 'success' }}
       run: uv run pytest
 
+  # Runs in parallel with the checks: publishing waits for this whole workflow anyway.
   package:
-    needs: checks
     runs-on: ubuntu-latest
 
     steps:
@@ -64,8 +63,6 @@ jobs:
         fetch-depth: 0
 
     - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
-      with:
-        enable-cache: true
 
     - name: Build sdist and wheel
       run: uv build

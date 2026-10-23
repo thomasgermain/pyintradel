@@ -116,9 +116,9 @@ The project uses [uv](https://docs.astral.sh/uv/):
 ```bash
 uv sync                  # create .venv with the dev tools from uv.lock
 uv run pytest
-uv run ruff check pyintradel tests
-uv run ruff format pyintradel tests
-uv run mypy pyintradel tests
+uv run ruff check
+uv run ruff format
+uv run mypy
 uv build                 # sdist and wheel in dist/
 ```
 
