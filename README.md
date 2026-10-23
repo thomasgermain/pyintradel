@@ -109,5 +109,21 @@ python3 -m pyintradel.main user passw town
 python3 -m pyintradel.main --cookie "PHPSESSID=..."
 ```
 
+## Development
+
+The project uses [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv sync                  # create .venv with the dev tools from uv.lock
+uv run pytest
+uv run ruff check pyintradel tests
+uv run ruff format pyintradel tests
+uv run mypy pyintradel tests
+uv build                 # sdist and wheel in dist/
+```
+
+To release, publish a GitHub release whose tag is the new version (e.g. `0.1.0`): the
+version is derived from the tag, and CI publishes to PyPI once the checks pass.
+
 ---
 <a href="https://www.buymeacoffee.com/tgermain" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>

@@ -1,50 +1,79 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
 name: Build
 
 on:
   push:
+    branches: [master]
   pull_request:
+  # Called by the publish workflow, so a release is only published after these checks pass.
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-
+  checks:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.12', '3.13']
+        python-version: ['3.13', '3.14', '3.15']
 
     steps:
     - uses: actions/checkout@v7
+      with:
+        # hatch-vcs derives the version from git tags.
+        fetch-depth: 0
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v7
+    - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
       with:
         python-version: ${{ matrix.python-version }}
+        enable-cache: true
 
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e .[dev]
+      id: sync
+      run: uv sync --locked
 
+    # Each check runs even if a previous one failed, but not when the install itself failed.
     - name: Lint with ruff
-      run: ruff check pyintradel tests
-      if: ${{ always() }}
+      if: ${{ !cancelled() && steps.sync.outcome == 'success' }}
+      run: uv run ruff check pyintradel tests
 
     - name: Check formatting with ruff
-      run: ruff format --check pyintradel tests
-      if: ${{ always() }}
+      if: ${{ !cancelled() && steps.sync.outcome == 'success' }}
+      run: uv run ruff format --check pyintradel tests
 
     - name: Type check with mypy
-      run: mypy pyintradel tests
-      if: ${{ always() }}
+      if: ${{ !cancelled() && steps.sync.outcome == 'success' }}
+      run: uv run mypy pyintradel tests
 
     - name: Run tests
-      run: pytest
-      if: ${{ always() }}
+      if: ${{ !cancelled() && steps.sync.outcome == 'success' }}
+      run: uv run pytest
 
-    - name: Check new pypi version is correct
-      run: (chmod +x .github/check_version.sh && sh .github/check_version.sh)
-      if: ${{ always() }}
+  package:
+    needs: checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        fetch-depth: 0
+
+    - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+      with:
+        enable-cache: true
+
+    - name: Build sdist and wheel
+      run: uv build
+
+    - name: Smoke test the wheel in a clean environment
+      run: uv run --isolated --no-project --with dist/*.whl pyintradel --help
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: dist
+        path: dist/

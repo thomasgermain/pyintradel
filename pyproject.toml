@@ -1,14 +1,14 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
 name = "pyIntradel"
-version = "0.0.8"
+dynamic = ["version"]
 description = "Python interface for Intradel"
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 authors = [
     { name = "Thomas Germain", email = "12560542+thomasgermain@users.noreply.github.com" },
 ]
@@ -20,31 +20,39 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Development Status :: 4 - Beta",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Home Automation",
 ]
 
 [project.urls]
 Homepage = "https://github.com/thomasgermain/pyintradel"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "ruff>=0.15",
     "mypy>=2.1",
     "pytest>=9.0",
-    "build>=1.5",
 ]
 
 [project.scripts]
 pyintradel = "pyintradel.main:main"
 
+[tool.hatch.version]
+# The version comes from the release tag (e.g. "0.1.0"), never from this file.
+source = "vcs"
+
 [tool.hatch.build.targets.wheel]
 packages = ["pyintradel"]
 
+# Explicit list, so local untracked files (editor or tool settings) never end up in the sdist.
+[tool.hatch.build.targets.sdist]
+include = ["pyintradel", "tests", "README.md", "LICENSE", "uv.lock"]
+
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py313"
 
 [tool.ruff.lint]
 select = [
