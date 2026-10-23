@@ -9,6 +9,7 @@ from . import parser, towns
 
 _LOGGER = logging.getLogger(__name__)
 _URL = "https://www.intradel.be/particulier/"
+_DATA_URL = _URL + "data.php"
 _HEADERS = {"Content-Type": "application/x-www-form-urlencoded"}
 
 
@@ -29,14 +30,8 @@ async def get_data(
     """
     if cookie:
         _LOGGER.info("Will query data using a session cookie")
-        headers = {"Cookie": cookie}
-
-        async with session.get(
-            "https://www.intradel.be/particulier/data.php", headers=headers
-        ) as resp:
-            if resp.status != 200:
-                raise ValueError(f"Received error {resp.status}", await resp.text())
-            return parser.parse(await resp.text())
+        async with session.get(_DATA_URL, headers={"Cookie": cookie}) as resp:
+            return await _parse_response(resp)
 
     if not login or not password or not town:
         raise ValueError("Either 'cookie' or 'login', 'password' and 'town' must be provided")
@@ -49,7 +44,10 @@ async def get_data(
     data = {"llogin": "YES", "login": login, "pass": password, "commune": town_id}
 
     async with session.post(_URL, data=data, headers=_HEADERS) as resp:
-        if resp.status != 200:
-            raise ValueError(f"Received error {resp.status}", await resp.text())
-        else:
-            return parser.parse(await resp.text())
+        return await _parse_response(resp)
+
+
+async def _parse_response(resp: aiohttp.ClientResponse) -> list[Any]:
+    if resp.status != 200:
+        raise ValueError(f"Received error {resp.status}", await resp.text())
+    return parser.parse(await resp.text())
