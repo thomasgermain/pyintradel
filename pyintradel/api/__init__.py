@@ -2,6 +2,7 @@
 
 import logging
 import re
+from http.cookies import CookieError, SimpleCookie
 from typing import Any
 
 import aiohttp
@@ -22,9 +23,15 @@ async def get_data(session: aiohttp.ClientSession, cookie: str) -> list[Any]:
     The website gates its login form behind an invisible reCAPTCHA, so the library cannot
     log in by itself.
     """
+    cookies = _parse_cookie(cookie)
+    if not cookies:
+        raise AuthenticationError()
+
     _LOGGER.info("Will query data using a session cookie")
-    headers = {"Cookie": _normalize_cookie(cookie)}
-    async with session.get(_DATA_URL, headers=headers, allow_redirects=False) as resp:
+    # Passed as `cookies`, not as a Cookie header: aiohttp lets cookies stored in the session's
+    # jar override a hand-written header, and intradel sets an anonymous PHPSESSID on any request
+    # without a session, so a shared session would otherwise send that one instead.
+    async with session.get(_DATA_URL, cookies=cookies, allow_redirects=False) as resp:
         # Intradel redirects to its login page when the session is not valid.
         if resp.status == 302:
             raise AuthenticationError()
@@ -37,9 +44,13 @@ async def get_data(session: aiohttp.ClientSession, cookie: str) -> list[Any]:
         return parser.parse(await resp.text())
 
 
-def _normalize_cookie(cookie: str) -> str:
-    """Accept the cookie as copied from browser dev tools, e.g. "Cookie: PHPSESSID=...\\n"."""
-    return _COOKIE_HEADER_PREFIX.sub("", cookie).strip()
+def _parse_cookie(cookie: str) -> dict[str, str]:
+    """Parse the cookie as copied from browser dev tools, e.g. "Cookie: PHPSESSID=...\\n"."""
+    try:
+        parsed = SimpleCookie(_COOKIE_HEADER_PREFIX.sub("", cookie).strip())
+    except CookieError:
+        return {}
+    return {name: morsel.value for name, morsel in parsed.items()}
 
 
 __all__ = ["ApiError", "AuthenticationError", "IntradelError", "ParseError", "get_data"]
