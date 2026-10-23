@@ -44,3 +44,11 @@ class GetDataTest(unittest.IsolatedAsyncioTestCase):
         session = _FakeSession(_FakeResponse(200, INCORRECT_LOGIN))
         with self.assertRaisesRegex(api.AuthenticationError, "cookie"):
             await api.get_data(session, "PHPSESSID=expired")  # type: ignore[arg-type]
+
+    async def test_http_error_raises_api_error_without_body(self) -> None:
+        session = _FakeSession(_FakeResponse(503, "<html>" + "x" * 10_000 + "</html>"))
+        with self.assertRaises(api.ApiError) as ctx:
+            await api.get_data(session, "PHPSESSID=abc")  # type: ignore[arg-type]
+
+        self.assertEqual(ctx.exception.status, 503)
+        self.assertEqual(str(ctx.exception), "HTTP 503 from intradel")

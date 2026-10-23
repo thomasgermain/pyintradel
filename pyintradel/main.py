@@ -26,7 +26,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 
 def main() -> None:
     args = _parse_args(sys.argv[1:])
-    asyncio.run(_run(args.cookie))
+    try:
+        asyncio.run(_run(args.cookie))
+    except api.IntradelError as err:
+        sys.exit(f"pyintradel: {err}")
 
 
 if __name__ == "__main__":

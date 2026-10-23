@@ -2,7 +2,7 @@ from typing import Any
 
 from bs4 import BeautifulSoup, Tag
 
-from .exceptions import AuthenticationError
+from .exceptions import AuthenticationError, ParseError
 
 
 def parse(response: str) -> list[Any]:
@@ -18,11 +18,15 @@ def parse(response: str) -> list[Any]:
     for data in soup.select(".grid .row .post__content"):
         result: dict[str, Any] = {}
         if data.find("h3") is not None:
-            name = _name(data)
-            start_date = _start_date(data)
-            chip_id = _chip_id(data) or name
-            details = _details(data)
-            total = _total(data) or str(len(details))
+            # The helpers index into the scraped markup; a website change surfaces as IndexError.
+            try:
+                name = _name(data)
+                start_date = _start_date(data)
+                chip_id = _chip_id(data) or name
+                details = _details(data)
+                total = _total(data) or str(len(details))
+            except IndexError as err:
+                raise ParseError("Unexpected response structure from intradel") from err
 
             result.update({"name": name})
             result.update({"start_date": start_date})
@@ -37,7 +41,7 @@ def parse(response: str) -> list[Any]:
 def _require_tag(node: object) -> Tag:
     """Narrow a bs4 lookup result to a Tag, failing loudly on unexpected markup."""
     if not isinstance(node, Tag):
-        raise ValueError("Unexpected response structure from intradel")
+        raise ParseError("Unexpected response structure from intradel")
     return node
 
 

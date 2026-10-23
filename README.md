@@ -84,8 +84,11 @@ The intradel.be login form is protected by an invisible reCAPTCHA, so this libra
 cannot log in by itself. Authenticate once in a real browser, then pass the resulting
 session cookie (the raw `Cookie` header, e.g. `PHPSESSID=...`).
 
-When the cookie has expired or is invalid, `api.AuthenticationError` is raised:
-log in again in the browser and use the new cookie.
+Errors raised by `api.get_data`, all subclasses of `api.IntradelError` (itself a `ValueError`):
+- `api.AuthenticationError`: the cookie has expired or is invalid; log in again in the
+  browser and use the new cookie.
+- `api.ApiError`: unexpected HTTP status, available as `.status`.
+- `api.ParseError`: the page structure is not the expected one, likely after a website change.
 
 ### Python module
 
