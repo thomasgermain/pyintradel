@@ -54,7 +54,7 @@ class GetDataTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cookies, {"lang": "fr", "PHPSESSID": "abc"})
 
     async def test_cookie_without_any_value_raises_before_any_request(self) -> None:
-        for raw in ("", "   \n", "Cookie:", "not a cookie"):
+        for raw in ("", "   \n", "Cookie:", "not a cookie", "a@b=1"):
             session = _FakeSession(_FakeResponse(200, CORRECT_RESPONSE))
             with self.assertRaises(api.AuthenticationError, msg=raw):
                 await api.get_data(session, raw)  # type: ignore[arg-type]

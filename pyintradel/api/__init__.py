@@ -47,7 +47,7 @@ async def get_data(session: aiohttp.ClientSession, cookie: str) -> list[Any]:
 def _parse_cookie(cookie: str) -> dict[str, str]:
     """Parse the cookie as copied from browser dev tools, e.g. "Cookie: PHPSESSID=...\\n"."""
     try:
-        parsed = SimpleCookie(_COOKIE_HEADER_PREFIX.sub("", cookie).strip())
+        parsed = SimpleCookie(_COOKIE_HEADER_PREFIX.sub("", cookie))
     except CookieError:
         return {}
     return {name: morsel.value for name, morsel in parsed.items()}
